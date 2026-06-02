@@ -96,13 +96,47 @@ export const useAppStore = create<AppState>((set, get) => ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ city }),
       });
-      // Always read the body — even on error it contains a useful message
-      const data = await res.json();
+
+      // Non-streaming error (e.g. 503 missing API key)
       if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: 'שגיאה בניתוח' }));
         set({ isAnalyzing: false, analysisError: data.error ?? 'שגיאה בניתוח' });
         return;
       }
-      set({ analysis: data.analysis, isAnalyzing: false });
+
+      // Consume the SSE stream
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('אין תגובה מהשרת');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        // Keep the last (potentially incomplete) line in the buffer
+        buffer = lines.pop() ?? '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const payload = JSON.parse(line.slice(6));
+            if (payload.done) {
+              if (payload.error) {
+                set({ isAnalyzing: false, analysisError: payload.error });
+              } else if (payload.analysis) {
+                set({ analysis: payload.analysis, isAnalyzing: false });
+              }
+            }
+            // heartbeat packets are silently ignored
+          } catch {
+            // ignore malformed SSE lines
+          }
+        }
+      }
     } catch (e) {
       set({ isAnalyzing: false, analysisError: (e as Error).message });
     }
