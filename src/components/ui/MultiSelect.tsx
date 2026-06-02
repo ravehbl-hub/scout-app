@@ -1,0 +1,52 @@
+'use client';
+import { cn } from '@/lib/utils';
+
+interface Option<T> {
+  value: T;
+  label: string;
+  icon?: string;
+}
+
+interface Props<T extends string> {
+  options: Option<T>[];
+  selected: T[];
+  onChange: (selected: T[]) => void;
+  label?: string;
+}
+
+export default function MultiSelect<T extends string>({ options, selected, onChange, label }: Props<T>) {
+  const toggle = (val: T) => {
+    if (selected.includes(val)) {
+      onChange(selected.filter((v) => v !== val));
+    } else {
+      onChange([...selected, val]);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      {label && <span className="text-xs text-gray-500">{label}</span>}
+      <div className="flex flex-wrap gap-1.5">
+        {options.map((opt) => {
+          const active = selected.includes(opt.value);
+          return (
+            <button
+              key={String(opt.value)}
+              type="button"
+              onClick={() => toggle(opt.value)}
+              className={cn(
+                'flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium border transition-all',
+                active
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                  : 'bg-white text-gray-700 border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+              )}
+            >
+              {opt.icon && <span>{opt.icon}</span>}
+              <span>{opt.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
