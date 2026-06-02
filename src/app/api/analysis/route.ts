@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
 const PROMPT = (city: string) => `
 אתה מומחה נדל"ן וחוקר עירוני ישראלי. בצע ניתוח מקיף ומפורט על ${city} בישראל.
 
@@ -42,9 +40,21 @@ const PROMPT = (city: string) => `
 `;
 
 export async function POST(req: NextRequest) {
+  // Check for API key before creating client — gives a clear error message
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return NextResponse.json(
+      { error: 'ANTHROPIC_API_KEY חסר — הוסף את המפתח בהגדרות Vercel ופרסם מחדש' },
+      { status: 503 }
+    );
+  }
+
   try {
     const { city } = await req.json();
     if (!city) return NextResponse.json({ error: 'חסר שם עיר' }, { status: 400 });
+
+    // Create client inside the handler so env var is always read at request time
+    const client = new Anthropic({ apiKey });
 
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',
@@ -54,11 +64,12 @@ export async function POST(req: NextRequest) {
 
     const text = message.content[0].type === 'text' ? message.content[0].text : '';
     const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('תשובה לא תקינה');
+    if (!jsonMatch) throw new Error('תשובה לא תקינה מה-AI');
 
     const analysis = JSON.parse(jsonMatch[0]);
     return NextResponse.json({ analysis });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    const msg = (e as Error).message ?? 'שגיאה לא ידועה';
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

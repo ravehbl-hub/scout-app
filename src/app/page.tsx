@@ -18,6 +18,7 @@ export default function HomePage() {
     analysisCity,
     analysis,
     isAnalyzing,
+    analysisError,
   } = useAppStore();
 
   const [showAnalysis, setShowAnalysis] = useState(false);
@@ -142,6 +143,7 @@ export default function HomePage() {
                 isAnalyzing={isAnalyzing}
                 analysis={analysisSections}
                 analysisName={analysis?.city}
+                analysisError={analysisError}
                 onClose={() => setShowAnalysis(false)}
               />
             )}
@@ -180,6 +182,7 @@ export default function HomePage() {
             isAnalyzing={isAnalyzing}
             analysis={analysisSections}
             analysisName={analysis?.city}
+            analysisError={analysisError}
             onClose={() => setShowAnalysis(false)}
           />
         </div>
@@ -196,6 +199,7 @@ interface AnalysisPanelProps {
   isAnalyzing: boolean;
   analysis: { title: string; content: string }[];
   analysisName?: string;
+  analysisError?: string | null;
   onClose: () => void;
 }
 
@@ -206,6 +210,7 @@ function AnalysisPanel({
   isAnalyzing,
   analysis,
   analysisName,
+  analysisError,
   onClose,
 }: AnalysisPanelProps) {
   return (
@@ -250,7 +255,15 @@ function AnalysisPanel({
           </div>
         )}
 
-        {!isAnalyzing && analysis.length > 0 && (
+        {!isAnalyzing && analysisError && (
+          <div className="mx-auto mt-8 max-w-sm rounded-2xl bg-red-50 border border-red-200 p-5 text-center space-y-2">
+            <p className="text-2xl">⚠️</p>
+            <p className="text-sm font-bold text-red-700">שגיאה בניתוח</p>
+            <p className="text-xs text-red-600 leading-relaxed">{analysisError}</p>
+          </div>
+        )}
+
+        {!isAnalyzing && !analysisError && analysis.length > 0 && (
           <div className="space-y-3">
             {analysisName && <h1 className="text-lg font-bold text-gray-900">{analysisName}</h1>}
             {analysis.map((s) => (
@@ -262,7 +275,7 @@ function AnalysisPanel({
           </div>
         )}
 
-        {!isAnalyzing && analysis.length === 0 && (
+        {!isAnalyzing && !analysisError && analysis.length === 0 && (
           <div className="flex flex-col items-center justify-center h-64 text-gray-400 gap-3">
             <span className="text-5xl">🔍</span>
             <p className="text-sm font-medium">הכנס שם עיר לניתוח מקיף</p>

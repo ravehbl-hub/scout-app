@@ -34,6 +34,7 @@ interface AppState {
   showFilters: boolean;
   analysis: AreaAnalysis | null;
   isAnalyzing: boolean;
+  analysisError: string | null;
   analysisCity: string;
 
   setFilter: <K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) => void;
@@ -54,6 +55,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   showFilters: false,
   analysis: null,
   isAnalyzing: false,
+  analysisError: null,
   analysisCity: '',
 
   setFilter: (key, value) =>
@@ -87,18 +89,22 @@ export const useAppStore = create<AppState>((set, get) => ({
   setShowFilters: (v) => set({ showFilters: v }),
 
   analyzeArea: async (city: string) => {
-    set({ isAnalyzing: true, analysis: null, analysisCity: city });
+    set({ isAnalyzing: true, analysis: null, analysisError: null, analysisCity: city });
     try {
       const res = await fetch('/api/analysis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ city }),
       });
-      if (!res.ok) throw new Error('שגיאה בניתוח');
+      // Always read the body — even on error it contains a useful message
       const data = await res.json();
+      if (!res.ok) {
+        set({ isAnalyzing: false, analysisError: data.error ?? 'שגיאה בניתוח' });
+        return;
+      }
       set({ analysis: data.analysis, isAnalyzing: false });
     } catch (e) {
-      set({ isAnalyzing: false, error: (e as Error).message });
+      set({ isAnalyzing: false, analysisError: (e as Error).message });
     }
   },
 
