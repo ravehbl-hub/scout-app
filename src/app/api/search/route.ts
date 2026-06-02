@@ -4,6 +4,7 @@ import { searchYad2 } from '@/lib/scrapers/yad2';
 import { searchMadlan } from '@/lib/scrapers/madlan';
 import { searchKones2 } from '@/lib/scrapers/kones2';
 import { searchFacebook } from '@/lib/scrapers/facebook';
+import { searchNadlan } from '@/lib/scrapers/nadlan';
 
 function parseFilters(req: NextRequest): SearchFilters {
   const p = req.nextUrl.searchParams;
@@ -44,6 +45,9 @@ export async function GET(req: NextRequest) {
   const sources = filters.sources;
 
   const tasks: Promise<Property[]>[] = [];
+  // Government real estate transaction data — always runs when city is set
+  if (filters.city) tasks.push(searchNadlan(filters));
+  // Source link cards + live API attempts
   if (sources.includes('yad2')) tasks.push(searchYad2(filters));
   if (sources.includes('madlan')) tasks.push(searchMadlan(filters));
   if (sources.includes('kones2')) tasks.push(searchKones2(filters));
@@ -54,13 +58,20 @@ export async function GET(req: NextRequest) {
     r.status === 'fulfilled' ? r.value : []
   );
 
-  // Sort by price ascending, nulls last
-  properties.sort((a, b) => {
+  // Real listings first (have price), then link cards (no price, id ends with -link)
+  const realListings = properties.filter((p) => !p.id.endsWith('-link'));
+  const linkCards = properties.filter((p) => p.id.endsWith('-link'));
+
+  // Sort real listings by price asc, nulls last
+  realListings.sort((a, b) => {
     if (a.price === null && b.price === null) return 0;
     if (a.price === null) return 1;
     if (b.price === null) return -1;
     return a.price - b.price;
   });
 
-  return NextResponse.json({ properties, total: properties.length });
+  return NextResponse.json({
+    properties: [...realListings, ...linkCards],
+    total: properties.length,
+  });
 }

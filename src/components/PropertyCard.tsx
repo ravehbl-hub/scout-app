@@ -75,9 +75,15 @@ export default function PropertyCard({ property, onClick }: Props) {
         ) : (
           <div className="flex items-center justify-center h-full text-gray-300 text-4xl">🏠</div>
         )}
-        <span className={`absolute top-2 right-2 px-2 py-0.5 rounded-lg text-[10px] font-bold ${LINK_STYLES[property.source]?.bg} ${LINK_STYLES[property.source]?.text}`}>
-          {SOURCE_LABELS[property.source]}
-        </span>
+        {property.agentName === 'נדל"ן ממשלתי' ? (
+          <span className="absolute top-2 right-2 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-purple-100 text-purple-800">
+            📊 נמכר
+          </span>
+        ) : (
+          <span className={`absolute top-2 right-2 px-2 py-0.5 rounded-lg text-[10px] font-bold ${LINK_STYLES[property.source]?.bg} ${LINK_STYLES[property.source]?.text}`}>
+            {SOURCE_LABELS[property.source]}
+          </span>
+        )}
         {property.priceDecreased && (
           <span className="absolute top-2 left-2 flex items-center gap-0.5 px-2 py-0.5 rounded-lg bg-orange-500 text-white text-[10px] font-bold">
             <TrendingDown className="w-3 h-3" />
