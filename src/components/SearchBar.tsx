@@ -33,13 +33,13 @@ export default function SearchBar() {
         )}
       </div>
 
+      {/* Filter toggle — hidden on desktop (sidebar always visible there) */}
       <button
         type="button"
         onClick={() => setShowFilters(!showFilters)}
-        className="relative p-3 rounded-xl border border-gray-200 bg-white shadow-sm hover:bg-gray-50 transition-colors"
+        className="relative p-3 rounded-xl border border-gray-200 bg-white shadow-sm hover:bg-gray-50 transition-colors lg:hidden"
       >
         <SlidersHorizontal className="w-4 h-4 text-gray-600" />
-        {/* dot indicator when filters are active */}
         {(filters.city || filters.propertyTypes.length > 0 || filters.features.length > 0) && (
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full" />
         )}

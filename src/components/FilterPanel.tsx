@@ -11,6 +11,7 @@ import {
   AD_FEATURE_OPTIONS,
 } from '@/lib/options';
 import type { PropertyType, PropertyFeature, PropertyCondition, AdFeature, AdvertiserType, HandType } from '@/types';
+import { cn } from '@/lib/utils';
 
 const FLOOR_LABELS: Record<number, string> = { '-1': 'מרתף', '0': 'קרקע' };
 const fmtFloor = (v: number) => FLOOR_LABELS[v] ?? String(v);
@@ -18,37 +19,51 @@ const fmtPrice = (v: number) =>
   v >= 1000000 ? `${(v / 1000000).toFixed(1)}M ₪` : v >= 1000 ? `${Math.round(v / 1000)}K ₪` : `${v} ₪`;
 const fmtArea = (v: number) => `${v} מ"ר`;
 
-export default function FilterPanel() {
+interface Props {
+  /** overlay = mobile full-screen; sidebar = desktop inline panel */
+  variant?: 'overlay' | 'sidebar';
+}
+
+export default function FilterPanel({ variant = 'overlay' }: Props) {
   const { filters, setFilter, resetFilters, setShowFilters, search } = useAppStore();
 
   const handleApply = () => {
-    setShowFilters(false);
+    if (variant === 'overlay') setShowFilters(false);
     search();
   };
 
+  const isOverlay = variant === 'overlay';
+
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-gray-50" dir="rtl">
+    <div
+      className={cn(
+        'flex flex-col bg-gray-50 h-full',
+        isOverlay && 'fixed inset-0 z-50'
+      )}
+      dir="rtl"
+    >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 shadow-sm">
-        <h2 className="font-bold text-gray-900 text-base">סינון מתקדם</h2>
+      <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 shadow-sm shrink-0">
+        <h2 className="font-bold text-gray-900 text-sm">סינון מתקדם</h2>
         <div className="flex items-center gap-2">
           <button
             onClick={resetFilters}
-            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+            className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
           >
-            <RotateCcw className="w-3.5 h-3.5" />
+            <RotateCcw className="w-3 h-3" />
             אפס
           </button>
-          <button onClick={() => setShowFilters(false)} className="p-1.5 rounded-lg hover:bg-gray-100">
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
+          {isOverlay && (
+            <button onClick={() => setShowFilters(false)} className="p-1.5 rounded-lg hover:bg-gray-100">
+              <X className="w-4 h-4 text-gray-500" />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
+      {/* Scrollable filters */}
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
 
-        {/* Location */}
         <Section title="מיקום">
           <input
             type="text"
@@ -68,7 +83,6 @@ export default function FilterPanel() {
           />
         </Section>
 
-        {/* Price */}
         <Section title="מחיר (₪)">
           <RangeSlider
             label="טווח מחיר"
@@ -81,10 +95,9 @@ export default function FilterPanel() {
           />
         </Section>
 
-        {/* Rooms */}
-        <Section title="מספר חדרים">
+        <Section title="חדרים">
           <RangeSlider
-            label="חדרים"
+            label="מספר חדרים"
             min={1}
             max={6}
             step={0.5}
@@ -94,7 +107,6 @@ export default function FilterPanel() {
           />
         </Section>
 
-        {/* Areas */}
         <Section title='שטח (מ"ר)'>
           <RangeSlider
             label='שטח דירה'
@@ -118,7 +130,6 @@ export default function FilterPanel() {
           </div>
         </Section>
 
-        {/* Floor */}
         <Section title="קומה">
           <RangeSlider
             label="קומות"
@@ -131,7 +142,6 @@ export default function FilterPanel() {
           />
         </Section>
 
-        {/* Property type */}
         <Section title="סוג נכס">
           <GroupedMultiSelect<PropertyType>
             options={PROPERTY_TYPE_OPTIONS.filter(
@@ -142,9 +152,8 @@ export default function FilterPanel() {
           />
         </Section>
 
-        {/* Advertiser */}
         <Section title="מפרסם">
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {(['broker', 'developer'] as AdvertiserType[]).map((a) => {
               const labels: Record<AdvertiserType, string> = { broker: 'מתווך', developer: 'קבלן/יזם' };
               const active = filters.advertisers.includes(a);
@@ -153,12 +162,12 @@ export default function FilterPanel() {
                   key={a}
                   type="button"
                   onClick={() =>
-                    setFilter(
-                      'advertisers',
-                      active ? filters.advertisers.filter((x) => x !== a) : [...filters.advertisers, a]
+                    setFilter('advertisers', active
+                      ? filters.advertisers.filter((x) => x !== a)
+                      : [...filters.advertisers, a]
                     )
                   }
-                  className={`px-3 py-1.5 rounded-xl text-sm font-medium border transition-all ${active ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-blue-50'}`}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${active ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-blue-50'}`}
                 >
                   {labels[a]}
                 </button>
@@ -167,7 +176,6 @@ export default function FilterPanel() {
           </div>
         </Section>
 
-        {/* Hand */}
         <Section title="יד">
           <div className="flex gap-2">
             {([['new', 'חדש מקבלן'], ['second_hand', 'יד שניה']] as [HandType, string][]).map(([val, lbl]) => {
@@ -177,7 +185,7 @@ export default function FilterPanel() {
                   key={val}
                   type="button"
                   onClick={() => setFilter('handType', active ? null : val)}
-                  className={`px-3 py-1.5 rounded-xl text-sm font-medium border transition-all ${active ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-blue-50'}`}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${active ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-blue-50'}`}
                 >
                   {lbl}
                 </button>
@@ -186,7 +194,6 @@ export default function FilterPanel() {
           </div>
         </Section>
 
-        {/* Features */}
         <Section title="מאפייני נכס">
           <MultiSelect<PropertyFeature>
             options={FEATURE_OPTIONS}
@@ -195,7 +202,6 @@ export default function FilterPanel() {
           />
         </Section>
 
-        {/* Entry date */}
         <Section title="תאריך כניסה">
           <input
             type="date"
@@ -205,7 +211,6 @@ export default function FilterPanel() {
           />
         </Section>
 
-        {/* Condition */}
         <Section title="מצב הנכס">
           <MultiSelect<PropertyCondition>
             options={CONDITION_OPTIONS}
@@ -214,7 +219,6 @@ export default function FilterPanel() {
           />
         </Section>
 
-        {/* Ad features */}
         <Section title="מאפייני מודעה">
           <MultiSelect<AdFeature>
             options={AD_FEATURE_OPTIONS}
@@ -224,13 +228,13 @@ export default function FilterPanel() {
         </Section>
       </div>
 
-      {/* Footer */}
-      <div className="px-4 py-3 bg-white border-t border-gray-100">
+      {/* Apply button */}
+      <div className="px-3 py-3 bg-white border-t border-gray-100 shrink-0">
         <button
           onClick={handleApply}
-          className="w-full py-3 rounded-xl bg-blue-600 text-white font-bold text-base shadow hover:bg-blue-700 active:bg-blue-800 transition-colors"
+          className="w-full py-2.5 rounded-xl bg-blue-600 text-white font-bold text-sm shadow hover:bg-blue-700 active:bg-blue-800 transition-colors"
         >
-          החל סינון וחפש
+          {isOverlay ? 'החל סינון וחפש' : 'חפש'}
         </button>
       </div>
     </div>
@@ -239,8 +243,8 @@ export default function FilterPanel() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-      <h3 className="text-sm font-semibold text-gray-700 mb-3">{title}</h3>
+    <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+      <h3 className="text-xs font-semibold text-gray-600 mb-2.5">{title}</h3>
       {children}
     </div>
   );

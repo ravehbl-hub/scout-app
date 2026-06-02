@@ -8,7 +8,7 @@ export default function ResultsList() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-blue-500 gap-3">
+      <div className="flex flex-col items-center justify-center py-20 text-blue-500 gap-3">
         <Loader2 className="w-10 h-10 animate-spin" />
         <p className="text-sm font-medium text-gray-500">מחפש נכסים...</p>
       </div>
@@ -17,7 +17,7 @@ export default function ResultsList() {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-red-500 gap-2">
+      <div className="flex flex-col items-center justify-center py-20 text-red-500 gap-2">
         <SearchX className="w-10 h-10" />
         <p className="text-sm">{error}</p>
       </div>
@@ -26,18 +26,19 @@ export default function ResultsList() {
 
   if (results.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-gray-400 gap-2">
-        <span className="text-5xl">🏠</span>
-        <p className="text-sm font-medium">חפש נכסים להתחיל</p>
-        <p className="text-xs text-gray-300">השתמש בחיפוש ובמסננים למעלה</p>
+      <div className="flex flex-col items-center justify-center py-20 text-gray-400 gap-3">
+        <span className="text-6xl">🏠</span>
+        <p className="text-base font-medium">חפש נכסים להתחיל</p>
+        <p className="text-sm text-gray-300">השתמש בחיפוש ובמסננים</p>
       </div>
     );
   }
 
   return (
-    <div>
-      <p className="text-xs text-gray-400 mb-3 text-right">{results.length} נכסים נמצאו</p>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div dir="rtl">
+      <p className="text-xs text-gray-400 mb-3">{results.length} נכסים נמצאו</p>
+      {/* 1 col mobile → 2 col tablet → 3 col large desktop */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {results.map((p) => (
           <PropertyCard key={p.id} property={p} onClick={() => setSelectedProperty(p)} />
         ))}
