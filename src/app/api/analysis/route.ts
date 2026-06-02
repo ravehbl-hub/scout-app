@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
         let fullText = '';
 
         const msgStream = client.messages.stream({
-          model: 'claude-opus-4-8',
+          model: 'claude-sonnet-4-6',
           max_tokens: 2000,
           messages: [{ role: 'user', content: PROMPT(city) }],
         });
